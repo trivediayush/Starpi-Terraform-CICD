@@ -33,7 +33,7 @@ jobs:
 
       - name: Terraform Init, Plan and Apply
         run: |
-          cd terraform
+          cd Terraform
           terraform init
           terraform plan
           terraform apply -auto-approve
