@@ -30,7 +30,7 @@ jobs:
 
       - name: Build, tag, and push image to ECR
         env:
-          ECR_REGISTRY: 711387111644.dkr.ecr.eu-north-1.amazonaws.com
+          ECR_REGISTRY: 711387111644.dkr.ecr.us-east-1.amazonaws.com
           ECR_REPOSITORY: mystrapi
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
