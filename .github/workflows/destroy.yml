@@ -1,11 +1,12 @@
 name: Destroy Strapi Deployment
 
 on:
-  workflow_dispatch:  # Triggered manually via the GitHub UI
-  
+  workflow_dispatch:  # Triggered manually via GitHub UI
+
 jobs:
   destroy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -13,21 +14,23 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7  # or any version you are using
+          terraform_version: 1.5.7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: eu-north-1  # Update to match your actual region
 
       - name: Terraform Init
         run: |
           cd Terraform
-          terraform init
+          terraform init -input=false
 
       - name: Terraform Destroy
+        env:
+          TF_VAR_region: eu-north-1  # Optional if you're using variables
         run: |
           cd Terraform
           terraform destroy -auto-approve
