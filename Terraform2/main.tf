@@ -157,11 +157,15 @@ resource "aws_ecs_service" "strapi_service" {
   cluster         = aws_ecs_cluster.strapi_cluster.id
   task_definition = aws_ecs_task_definition.strapi_task.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
+
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
 
   network_configuration {
-    subnets         = module.vpc.public_subnets
-    security_groups = [aws_security_group.alb_sg.id]
+    subnets          = module.vpc.public_subnets
+    security_groups  = [aws_security_group.alb_sg.id]
     assign_public_ip = true
   }
 
