@@ -1,23 +1,19 @@
-name: Deploy Strapi to ECS Fargate
+name: CI/CD Deployment
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.7
-
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -25,20 +21,23 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to ECR
-        env:
-          ECR_REGISTRY: 711387111644.dkr.ecr.us-east-1.amazonaws.com
-          ECR_REPOSITORY: mystrapi
+      - name: Build, Tag, and Push Docker Image
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          IMAGE_URI=711387111644.dkr.ecr.us-east-1.amazonaws.com/mystrapirepo:latest
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
 
-      - name: Terraform Init, Plan and Apply
+      - name: Register ECS Task Definition
         run: |
-          cd Terraform
-          terraform init
-          terraform plan
-          terraform apply -auto-approve
+          aws ecs register-task-definition \
+            --cli-input-json file://taskdef.json
+
+      - name: Deploy via CodeDeploy
+        run: |
+          aws deploy create-deployment \
+            --application-name strapi-codedeploy-app \
+            --deployment-group-name strapi-deployment-group \
+            --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
+            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"$(cat appspec.yaml | sed 's/\"/\\"/g' | awk '{printf "%s\\n", $0}')\"}"
